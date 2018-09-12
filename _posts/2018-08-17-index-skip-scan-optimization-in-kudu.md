@@ -21,7 +21,7 @@ CREATE TABLE metrics (
     role STRING,
     PRIMARY KEY (host, tstamp, clusterid)
 );
-```SQL
+```
 
 ![png](https://github.com/AnupamaGupta01/kudu-1/blob/gh-pages-staging/img/index-skip-scan/example-table.png)
 *Sample rows of Table `metrics` (sorted by key columns).*
@@ -50,7 +50,7 @@ and also satisfy the predicate on the `tstamp` column.
 For example, consider the query:
 ```SQL
 SELECT clusterid FROM metrics WHERE tstamp = 100;
-```SQL
+```
 
 ![png](https://github.com/AnupamaGupta01/kudu-1/blob/gh-pages-staging/img/index-skip-scan/skip-scan-example-table.png)
 *Skip scan flow illustration. The rows in green are scanned and the rest are skipped.*
