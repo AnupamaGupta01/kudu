@@ -6,7 +6,8 @@ author: Anupama Gupta
 
 This summer I got the opportunity to intern with the Apache Kudu team at Cloudera.
 My project was to optimize the Kudu scan path by implementing a technique called
-index skip scan (a.k.a. scan-to-seek, see section 4.1 in [1]).
+index skip scan (a.k.a. scan-to-seek, see section 4.1 in [1]). I wanted to share 
+my experience and the progress we've made so far on the approach.
 
 <!--more-->
 
@@ -34,7 +35,7 @@ As shown in the table above, the index data is sorted by the composite of all ke
 When the user query contains the first key column (`host`), Kudu uses the index (as the index data is
 primarily sorted on the first key column).
 
-Now, what if the user query does not contain the first key column and instead contains `tstamp` column?
+Now, what if the user query does not contain the first key column and instead only contains the `tstamp` column?
 In the above case, the `tstamp` column values are sorted with respect to `host`,
 but are not globally sorted, and as such, it's non-trivial to use the index to filter rows.
 Instead, a full tablet scan is done by default. Other databases may optimize such scans by building secondary indexes
@@ -73,11 +74,11 @@ schema and query pattern mentioned earlier) is shown below.
 
 Based on our experiments, on up to 10 million rows per tablet (as shown below), we found that the skip scan performance
 begins to get worse with respect to the full tablet scan performance when the prefix column cardinality
-exceeds ![equation](http://latex.codecogs.com/gif.download?%5Csqrt%20%7B%20%5C%23rows%5C%20in%5C%20tablet%20%7D).
+exceeds sqrt(number_of_rows_in_tablet).
 Therefore, in order to use skip scan performance benefits when possible and maintain a consistent performance in cases
-of large prefix column cardinality, we decide to dynamically disable skip scan when the number of skips for
-distinct prefix keys exceeds ![equation](http://latex.codecogs.com/gif.download?%5Csqrt%20%7B%20%5C%23rows%5C%20in%5C%20tablet%20%7D).
-It will be an interesting take to further explore sophisticated heuristics to decide when
+of large prefix column cardinality, we have tentatively chosen to dynamically disable skip scan when the number of skips for
+distinct prefix keys exceeds sqrt(number_of_rows_in_tablet).
+It will be an interesting project to further explore sophisticated heuristics to decide when
 to dynamically disable skip scan.
 
 ![png](https://github.com/AnupamaGupta01/kudu-1/blob/gh-pages-staging/img/index-skip-scan/skip-scan-performance-graph.png)
@@ -87,7 +88,7 @@ Conclusion
 
 Skip scan optimization in Kudu can lead to huge performance benefits that scale with the size of
 data in Kudu tablets. This is a work-in-progress [patch](https://gerrit.cloudera.org/#/c/10983/).
-The current implementation works only for equality predicates on the non-first primary key
+The implementation in the patch works only for equality predicates on the non-first primary key
 columns. An important point to note is that although, in the above specific example, the number of prefix
 columns is one (`host`), this approach is generalized to work with any number of prefix columns.
 
